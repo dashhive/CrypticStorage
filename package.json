@@ -17,7 +17,12 @@
   },
   "author": "jojobyte <byte@jojo.io> (https://jojo.io/)",
   "license": "MIT",
-  "main": "crypticStorage.js",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "crypticstorage.js"
+  ],
   "scripts": {
     "start": "npx sirv-cli -D -s --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 6443 .",
     "lint": "npx -p typescript@4.x -- tsc -p ./jsconfig.json",

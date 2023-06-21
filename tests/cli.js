@@ -1,4 +1,4 @@
-const CrypticStorage = require('../crypticStorage.js');
+const CrypticStorage = require('../crypticstorage.js');
 
 const STOREAGE_SALT = 'cloud robot resist squeeze';
 

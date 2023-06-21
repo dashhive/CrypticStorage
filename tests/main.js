@@ -1,5 +1,5 @@
-import '../crypticStorage.js';
-import * as CrypticStorageTypes from '../crypticStorage.js';
+import '../crypticstorage.js';
+import * as CrypticStorageTypes from '../crypticstorage.js';
 
 const STOREAGE_SALT = 'cloud robot resist squeeze';
 
