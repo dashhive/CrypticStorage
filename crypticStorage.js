@@ -90,7 +90,6 @@
  * @returns {Promise<Boolean>}
  */
 
-
 /**
  * @async
  * @callback EncryptedStorage
@@ -135,12 +134,12 @@
 
 /** @type {CrypticStorage} */
 // @ts-ignore
-var CrypticStorage = ("object" === typeof module && exports) || {};
+var CrypticStorage = ('object' === typeof module && exports) || {};
 
 (function (window, CrypticStorage) {
-  "use strict";
+  'use strict';
 
-  let Crypto = window.crypto || require("node:crypto");
+  let Crypto = window.crypto || require('node:crypto');
 
   CrypticStorage.bufferToString = function (ab) {
     let bytes = new Uint8Array(ab);
@@ -161,11 +160,11 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
 
     bytes.forEach(function (b) {
       let h = b.toString(16);
-      h = h.padStart(2, "0");
+      h = h.padStart(2, '0');
       hex.push(h);
     });
 
-    return hex.join("");
+    return hex.join('');
   };
 
   CrypticStorage.toBytes = function (hex) {
@@ -195,23 +194,23 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
   };
 
   CrypticStorage.encryptString = function (
-    password, salt, currentCrypto = Crypto
+    password,
+    salt,
+    currentCrypto = Crypto,
   ) {
     const name = 'AES-GCM';
-    const targets = ["encrypt", "decrypt"];
+    const targets = ['encrypt', 'decrypt'];
     const pbkdfName = 'PBKDF2';
     const hash = { name: 'SHA-256', length: 256 };
     const iterations = 1000;
 
-    const deriveKey = async (
-      password, salt, currentCrypto = Crypto
-    ) => {
+    const deriveKey = async (password, salt, currentCrypto = Crypto) => {
       const keyMaterial = await currentCrypto.subtle.importKey(
-        "raw",
+        'raw',
         CrypticStorage.stringToBuffer(password),
         { name: pbkdfName },
         false,
-        ["deriveBits", "deriveKey"]
+        ['deriveBits', 'deriveKey'],
       );
       return currentCrypto.subtle.deriveKey(
         {
@@ -234,12 +233,15 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
       }
 
       return await deriveKey(password, salt)
-        .then(async cryptoKey => await currentCrypto.subtle.encrypt(
-          { name, iv },
-          cryptoKey,
-          CrypticStorage.stringToBuffer(message)
-        ))
-        .then(enc => CrypticStorage.bufferToHex(enc));
+        .then(
+          async (cryptoKey) =>
+            await currentCrypto.subtle.encrypt(
+              { name, iv },
+              cryptoKey,
+              CrypticStorage.stringToBuffer(message),
+            ),
+        )
+        .then((enc) => CrypticStorage.bufferToHex(enc));
     }
 
     async function decrypt(ciphertext, iv) {
@@ -250,17 +252,17 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
       return await deriveKey(password, salt)
         .then(async function (cryptoKey) {
           return await currentCrypto.subtle.decrypt(
-              { name, iv },
-              cryptoKey,
-              CrypticStorage.hexToBuffer(ciphertext)
-            )
+            { name, iv },
+            cryptoKey,
+            CrypticStorage.hexToBuffer(ciphertext),
+          );
         })
-        .then(dec => CrypticStorage.bufferToString(dec));
-    };
+        .then((dec) => CrypticStorage.bufferToString(dec));
+    }
 
-    function getInitVector () {
+    function getInitVector() {
       return currentCrypto.getRandomValues(new Uint8Array(16));
-    };
+    }
 
     return { encrypt, decrypt, getInitVector };
   };
@@ -275,13 +277,10 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
 
       return decrypted === testMessage;
     } catch (error) {
-      console.warn(
-        'Your browser does not support WebCrypto API',
-        error,
-      );
+      console.warn('Your browser does not support WebCrypto API', error);
       return false;
     }
-  }
+  };
 
   CrypticStorage.getEncryptedStorageFromCrypto = async function (
     storage,
@@ -295,10 +294,10 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
      * @returns {ArrayBufferLike}
      */
     const getIV = (key) => {
-      let ivk = storage.getItem(key)
+      let ivk = storage.getItem(key);
 
       if (ivk) {
-        ivk = ivk.split(':')[1]
+        ivk = ivk.split(':')[1];
         return CrypticStorage.hexToBuffer(ivk);
       }
 
@@ -336,13 +335,10 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
 
             storage.setItem(
               key,
-              `${encrypted}:${CrypticStorage.bufferToHex(iv)}`
+              `${encrypted}:${CrypticStorage.bufferToHex(iv)}`,
             );
           } catch (error) {
-            console.error(
-              `Cannot set encrypted value for ${key}`,
-              error
-            );
+            console.error(`Cannot set encrypted value for ${key}`, error);
             throw error;
           }
         } else {
@@ -353,18 +349,11 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
         await setBrowserSupport();
         if (isSupported) {
           try {
-            const [
-              data, iv
-            ] = storage.getItem(key)?.split(':');
+            const [data, iv] = storage.getItem(key)?.split(':');
 
-            return await cryptoWrapper.decrypt(
-              data, iv
-            );
+            return await cryptoWrapper.decrypt(data, iv);
           } catch (error) {
-            console.error(
-              `Cannot get encrypted item for ${key}.`,
-              error
-            );
+            console.error(`Cannot get encrypted item for ${key}.`, error);
             return null;
           }
         }
@@ -378,7 +367,9 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
   };
 
   CrypticStorage.getEncryptedStorageFromPassword = async function (
-    storage, password, salt,
+    storage,
+    password,
+    salt,
   ) {
     return await CrypticStorage.getEncryptedStorageFromCrypto(
       storage,
@@ -386,29 +377,25 @@ var CrypticStorage = ("object" === typeof module && exports) || {};
     );
   };
 
-  CrypticStorage.getEncryptedStorage = async function (
-    storage, ...args
-  ) {
+  CrypticStorage.getEncryptedStorage = async function (storage, ...args) {
     const [arg1, arg2] = args;
-    if (typeof arg1 === 'object') { // it is crypto object
-      return await CrypticStorage.getEncryptedStorageFromCrypto(
-        storage, arg1,
-      );
+    if (typeof arg1 === 'object') {
+      // it is crypto object
+      return await CrypticStorage.getEncryptedStorageFromCrypto(storage, arg1);
     }
     if (typeof arg1 === 'string' && typeof arg2 === 'string') {
       return await CrypticStorage.getEncryptedStorageFromPassword(
-        storage, arg1, arg2,
+        storage,
+        arg1,
+        arg2,
       );
     }
   };
 
   // @ts-ignore
   window.CrypticStorage = CrypticStorage;
-})(
-  /** @type {Window} */ (globalThis.window || {}),
-  CrypticStorage
-);
+})(/** @type {Window} */ (globalThis.window || {}), CrypticStorage);
 
-if ("object" === typeof module) {
+if ('object' === typeof module) {
   module.exports = CrypticStorage;
 }
