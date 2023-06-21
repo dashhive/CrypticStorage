@@ -1,0 +1,36 @@
+{
+  "name": "crypticstorage",
+  "version": "0.0.0",
+  "description": "Browser & Server compatible encrypted storage",
+  "keywords": [
+    "localStorage",
+    "sessionStorage",
+    "encryption",
+    "crypto"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dashhive/CrypticStorage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dashhive/CrypticStorage/issues"
+  },
+  "author": "jojobyte <byte@jojo.io> (https://jojo.io/)",
+  "license": "MIT",
+  "main": "crypticStorage.js",
+  "scripts": {
+    "start": "npx sirv-cli -D -s --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 6443 .",
+    "lint": "npx -p typescript@4.x -- tsc -p ./jsconfig.json",
+    "browser-test": "npx mochify@6 --wd -R spec",
+    "test": "mocha",
+    "unit": "mocha",
+    "coverage": "npx istanbul@0.4 cover ./node_modules/.bin/_mocha -- --reporter list test/*.js",
+    "coveralls": "npm run-script coverage && npx coveralls@3 < coverage/lcov.info",
+    "bump": "npm version -m \"chore(release): bump to v%s\"",
+    "fmt": "npx -p prettier@2.x -- prettier -w '**/*.{js,md}'"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "mocha-lcov-reporter": "0.0.1"
+  }
+}

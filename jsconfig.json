@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "maxNodeModuleJsDepth": 20,
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext",
+      "WebWorker"
+    ],
+    "declaration": true,
+    "declarationDir": ".",
+    "declarationMap": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // "types": ["node"],
+    "typeRoots": [
+      "typings",
+      "node_modules/@types",
+    ]
+  },
+  "include": [
+    "./types.js",
+    "*.js",
+    "bin/**/*.js",
+    "lib/**/*.js",
+    "src/**/*.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
