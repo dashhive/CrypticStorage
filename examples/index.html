@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrypticStorage Example</title>
+  <meta name="theme-color" content="#242424">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-size: 16px;
+    }
+    button,
+    input,
+    textarea {
+      min-width: 30rem;
+      width: 50vw;
+      padding: .5rem;
+      font-size: 1.5rem;
+      margin-top: .5rem;
+    }
+    form {
+      margin-bottom: 2rem;
+    }
+    button {
+      width: 20rem;
+      display: flex;
+      text-align: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <form name="encrypt" id="encrypt" method="post">
+    <input type="password" name="pass" id="pass"
+      placeholder="Encryption password"
+    /><br/>
+    <textarea
+      name="message"
+      id="message"
+      placeholder="Message to encrypt"
+    ></textarea>
+    <button type="submit">Encrypt Message</button>
+  </form>
+
+  <form name="decrypt" id="decrypt" method="post">
+    <textarea
+      name="encryptedMessage"
+      id="encryptedMessage"
+      placeholder="Encrypted message value"
+    ></textarea><br/>
+    <input
+      type="text"
+      name="encryptedVector"
+      id="encryptedVector"
+      placeholder="Init Vector"
+    />
+    <button type="submit">Decrypt Message</button>
+  </form>
+
+  <script src="./browser.js" type="module" async defer></script>
+</body>
+</html>
