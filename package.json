@@ -21,11 +21,13 @@
   "files": [
     "index.js",
     "lib/",
-    "crypticstorage.js"
+    "cryptic.js",
+    "storage.js"
   ],
   "scripts": {
     "start": "npx sirv-cli -D -s --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 6443 .",
     "lint": "npx -p typescript@4.x -- tsc -p ./jsconfig.json",
+    "example:server": "node ./examples/server.js",
     "browser-test": "npx mochify@6 --wd -R spec",
     "test": "mocha",
     "unit": "mocha",
