@@ -122,8 +122,6 @@ var Cryptic = ('object' === typeof module && exports) || {};
     iterations: 1000,
   }
 
-  let encryptionPassword
-
   Cryptic.setConfig = function (key, value) {
     if (key && !value) {
       defaultConfig = {
@@ -134,12 +132,6 @@ var Cryptic = ('object' === typeof module && exports) || {};
     if (key && value) {
       defaultConfig[key] = value
     }
-
-    return defaultConfig;
-  };
-
-  Cryptic.setConfig = function (key, value) {
-    defaultConfig[key] = value
 
     return defaultConfig;
   };
@@ -201,18 +193,22 @@ var Cryptic = ('object' === typeof module && exports) || {};
     salt,
     currentCrypto = Crypto,
   ) {
-    encryptionPassword = password
+    let encryptionPassword = password
     // const name = 'AES-GCM';
     // const targets = ['encrypt', 'decrypt'];
     // const pbkdfName = 'PBKDF2';
     // const hash = { name: 'SHA-256', length: 256 };
     // const iterations = 1000;
 
-    const deriveKey = async (password, salt, currentCrypto = Crypto) => {
+    const deriveKey = async (
+      password,
+      salt,
+      currentCrypto = Crypto
+    ) => {
       const keyMaterial = await currentCrypto.subtle.importKey(
         'raw',
         Cryptic.stringToBuffer(password),
-        { name: defaultConfig.pbkdfName },
+        defaultConfig.pbkdfName,
         false,
         ['deriveBits', 'deriveKey'],
       );
@@ -249,7 +245,6 @@ var Cryptic = ('object' === typeof module && exports) || {};
             ),
         )
         .then((enc) => Cryptic.bufferToHex(enc))
-        // .catch(err => console.error('encryption failed', err));
     }
 
     async function decrypt(ciphertext, iv) {
@@ -266,7 +261,6 @@ var Cryptic = ('object' === typeof module && exports) || {};
           );
         })
         .then((dec) => Cryptic.bufferToString(dec))
-        // .catch(err => console.error('decryption failed', err));
     }
 
     function getInitVector() {
