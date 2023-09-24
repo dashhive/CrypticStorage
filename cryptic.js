@@ -13,6 +13,7 @@
  * @typedef {Object} StringCryptic
  * @prop {EncryptStr} encrypt
  * @prop {DecryptStr} decrypt
+ * @prop {DeriveKey} deriveKey
  * @prop {InitVector} getInitVector
  */
 
@@ -93,6 +94,16 @@
  * @callback BrowserSupport
  *
  * @returns {Promise<Boolean>}
+ */
+
+/**
+ * Creates an instance of Cryptic with encrypt and decrypt operations
+ *
+ * @callback DeriveKey
+ * @param {String} password
+ * @param {String} salt
+ * @param {Crypto} [currentCrypto] - window.crypto instance
+ * @returns {Promise<CryptoKey>}
  */
 
 /**
@@ -267,7 +278,7 @@ var Cryptic = ('object' === typeof module && exports) || {};
       return currentCrypto.getRandomValues(new Uint8Array(16));
     }
 
-    return { encrypt, decrypt, getInitVector };
+    return { encrypt, decrypt, deriveKey, getInitVector };
   };
 
   Cryptic.isBrowserSupported = async () => {
