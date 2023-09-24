@@ -1,6 +1,6 @@
-// import '../dist/cryptic.js';
-// import '../dist/crypticstorage.js';
-import '../dist/index.js';
+import '../cryptic.js';
+import '../storage.js';
+// import '../dist/index.js';
 // import * as CrypticTypes from '../cryptic.js';
 // import * as CrypticStorageTypes from '../crypticstorage.js';
 
@@ -45,7 +45,7 @@ async function initEncryptedStore(pass) {
   };
 }
 
-let $ies = await initEncryptedStore('pass');
+let $ies = await initEncryptedStore('foobar');
 
 $s = $ies.$store
 $c = $ies.$wrapper
