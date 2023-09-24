@@ -3,8 +3,8 @@ const Cryptic = require('../cryptic.js');
 const STOREAGE_SALT = 'cloud robot resist squeeze';
 
 async function main() {
-  const testMessage = 'what is the air speed velocity of an unlaiden swallow?';
-  const cw = Cryptic.encryptString('pass', STOREAGE_SALT);
+  const testMessage = 'what is the air speed velocity of an unladen swallow?';
+  const cw = Cryptic.encryptString('foobar', STOREAGE_SALT);
   const iv = cw.getInitVector();
   const encrypted = await cw.encrypt(testMessage, iv);
   const decrypted = await cw.decrypt(encrypted, iv);
@@ -18,10 +18,11 @@ async function main() {
   ]);
 
   let valFromBrowser =
-    '29c289446c1b007a1b10ff0fac3111cde2dca1bcd53cd0f4b5468f66aef0e526cddd1c371487d9c4:2830ee00182b3113bab4851258c22677';
+    'af9c8ba7e4d173c47e03cd21fcb28cb5b1cf765482a98f1e41c9eb18:f7ab6dc9bec87277f447cbd8168672ae';
   let [data, biv] = valFromBrowser.split(':');
 
-  console.log('Encrypted Test from Browser', [
+  console.log('Decrypt value from Browser', [
+    data,
     biv,
     await cw.decrypt(data, biv),
   ]);
