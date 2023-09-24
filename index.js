@@ -1,9 +1,14 @@
 'use strict';
 
-module.exports = require('./crypticstorage.js');
+const Exports = {}
 
-// these typedef reexports will be available to dependent packages
+Exports.Cryptic = require('./cryptic.js');
+Exports.Storage = require('./storage.js');
+
+module.exports = Exports
+
 /**
- * @typedef {import('./crypticstorage.js').CrypticStorage} CrypticStorage
- * @typedef {import('./crypticstorage.js').StorageCryptic} StorageCryptic
+ * @typedef {import('./storage.js').CrypticStorage} Storage
+ * @typedef {import('./cryptic.js').Cryptic} Cryptic
+ * @typedef {import('./cryptic.js').StringCryptic} StringCryptic
  */
