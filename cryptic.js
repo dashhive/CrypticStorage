@@ -9,6 +9,7 @@
  * @prop {HexToBuffer} hexToBuffer
  * @prop {EncryptString} encryptString
  * @prop {BrowserSupport} isBrowserSupported
+ * @prop {RandomBytes} randomBytes
  *
  * @typedef {Object} StringCryptic
  * @prop {EncryptStr} encrypt
@@ -18,10 +19,18 @@
  */
 
 /**
+ * @callback RandomBytes
+ *
+ * @param {number} bytes
+ *
+ * @returns {Uint8Array}
+ */
+
+/**
  * @callback SetConfig
  *
  * @param {string | any} key
- * @param {string} value
+ * @param {string | number} value
  */
 
 /**
@@ -127,6 +136,7 @@ var Cryptic = ('object' === typeof module && exports) || {};
 
   let defaultConfig = {
     name: 'AES-GCM',
+    length: 256,
     targets: ['encrypt', 'decrypt'],
     pbkdfName: 'PBKDF2',
     hash: { name: 'SHA-256', length: 256 },
@@ -199,6 +209,12 @@ var Cryptic = ('object' === typeof module && exports) || {};
     return bytes.buffer;
   };
 
+  Cryptic.randomBytes = function (bytes = 16) {
+    return Crypto.getRandomValues(
+      new Uint8Array(bytes)
+    )
+  };
+
   Cryptic.encryptString = function (
     password,
     salt,
@@ -223,6 +239,7 @@ var Cryptic = ('object' === typeof module && exports) || {};
         false,
         ['deriveBits', 'deriveKey'],
       );
+
       return currentCrypto.subtle.deriveKey(
         {
           name: defaultConfig.pbkdfName,
@@ -233,7 +250,7 @@ var Cryptic = ('object' === typeof module && exports) || {};
         keyMaterial,
         {
           name: defaultConfig.name,
-          length: defaultConfig.hash.length
+          length: defaultConfig.length,
         },
         true,
         // @ts-ignore
@@ -246,11 +263,17 @@ var Cryptic = ('object' === typeof module && exports) || {};
         iv = Cryptic.hexToBuffer(iv);
       }
 
+      let cipherCfg = getCipherCfg(iv)
+
       return await deriveKey(encryptionPassword, salt)
         .then(
           async (cryptoKey) =>
             await currentCrypto.subtle.encrypt(
-              { name: defaultConfig.name, iv },
+              {
+                name: defaultConfig.name,
+                iv,
+                ...cipherCfg,
+              },
               cryptoKey,
               Cryptic.stringToBuffer(message),
             ),
@@ -263,10 +286,16 @@ var Cryptic = ('object' === typeof module && exports) || {};
         iv = Cryptic.hexToBuffer(iv);
       }
 
+      let cipherCfg = getCipherCfg(iv)
+
       return await deriveKey(encryptionPassword, salt)
         .then(async function (cryptoKey) {
           return await currentCrypto.subtle.decrypt(
-            { name: defaultConfig.name, iv },
+            {
+              name: defaultConfig.name,
+              iv,
+              ...cipherCfg,
+            },
             cryptoKey,
             Cryptic.hexToBuffer(ciphertext),
           );
@@ -274,8 +303,21 @@ var Cryptic = ('object' === typeof module && exports) || {};
         .then((dec) => Cryptic.bufferToString(dec))
     }
 
+    function getCipherCfg(iv) {
+      let cipherCfg = {}
+
+      if (defaultConfig.name === 'AES-CTR') {
+        cipherCfg = {
+          counter: iv,
+          length: defaultConfig.length
+        }
+      }
+
+      return cipherCfg
+    }
+
     function getInitVector() {
-      return currentCrypto.getRandomValues(new Uint8Array(16));
+      return Cryptic.randomBytes(16);
     }
 
     return { encrypt, decrypt, deriveKey, getInitVector };
