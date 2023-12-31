@@ -7,14 +7,18 @@
  * @prop {ToBytes} toBytes
  * @prop {BufferToHex} bufferToHex
  * @prop {HexToBuffer} hexToBuffer
- * @prop {EncryptString} encryptString
+ * @prop {CrypticInstance} create
+ * @prop {EncryptString} encryptString - Deprecated: renamed to `create` since version 0.1.0
  * @prop {BrowserSupport} isBrowserSupported
  * @prop {RandomBytes} randomBytes
  *
- * @typedef {Object} StringCryptic
+ * @typedef {Object} CrypticMethods
+ * @prop {Promise<CryptoKey>} keyMaterial
+ * @prop {Promise<CryptoKey>} derivedKey
  * @prop {EncryptStr} encrypt
  * @prop {DecryptStr} decrypt
  * @prop {DeriveKey} deriveKey
+ * @prop {DeriveBits} deriveBits
  * @prop {InitVector} getInitVector
  */
 
@@ -30,7 +34,7 @@
  * @callback SetConfig
  *
  * @param {string | any} key
- * @param {string | number} value
+ * @param {string | number} [value]
  */
 
 /**
@@ -44,6 +48,7 @@
  *
  * @param {string} message
  * @param {string | ArrayBufferLike} iv
+ * @param {Function} [outputFormatter]
  *
  * @returns {Promise<string>}
  */
@@ -53,6 +58,7 @@
  *
  * @param {string} ciphertext
  * @param {string | ArrayBufferLike} iv
+ * @param {Function} [outputFormatter]
  *
  * @returns {Promise<string>}
  */
@@ -106,41 +112,72 @@
  */
 
 /**
- * Creates an instance of Cryptic with encrypt and decrypt operations
+ * Creates SubtleCrypto key material
  *
- * @callback DeriveKey
+ * @callback ImportKey
  * @param {String} password
- * @param {String} salt
  * @param {Crypto} [currentCrypto] - window.crypto instance
  * @returns {Promise<CryptoKey>}
  */
 
 /**
+ * Derives a secret key from SubtleCrypto key material
+ *
+ * @callback DeriveKey
+ * @param {String | ArrayBufferLike} salt
+ * @param {Crypto} [currentCrypto] - window.crypto instance
+ * @returns {Promise<CryptoKey>}
+ */
+
+/**
+ * Derives an array of bits from SubtleCrypto key material
+ *
+ * @callback DeriveBits
+ * @param {Number} numBits
+ * @param {String | ArrayBufferLike} salt
+ * @param {Crypto} [currentCrypto] - window.crypto instance
+ * @returns {Promise<ArrayBuffer>}
+ */
+
+/**
  * Creates an instance of Cryptic with encrypt and decrypt operations
  *
+ * @callback CrypticInstance
+ * @param {String} password
+ * @param {String} salt
+ * @param {Crypto} [currentCrypto] - window.crypto instance
+ * @returns {CrypticMethods}
+ */
+
+/**
+ * Creates an instance of Cryptic with encrypt and decrypt operations
+ *
+ * @deprecated since version 0.1.0
  * @callback EncryptString
  * @param {String} password
  * @param {String} salt
  * @param {Crypto} [currentCrypto] - window.crypto instance
- * @returns {StringCryptic}
+ * @returns {CrypticMethods}
  */
+
 
 /** @type {Cryptic} */
 // @ts-ignore
 var Cryptic = ('object' === typeof module && exports) || {};
 
-(function (Window, Cryptic) {
+;(function (Window, Cryptic) {
   'use strict';
 
-  let Crypto = Window.crypto;
+  let Crypto = Window.crypto
 
   let defaultConfig = {
-    name: 'AES-GCM',
-    length: 256,
-    targets: ['encrypt', 'decrypt'],
-    pbkdfName: 'PBKDF2',
-    hash: { name: 'SHA-256', length: 256 },
-    iterations: 1000,
+    materialTargets: ['deriveBits', 'deriveKey'],
+    deriveTargets: ['encrypt', 'decrypt'],
+    derivationAlgorithm: 'PBKDF2',
+    hashingAlgorithm: 'SHA-256',
+    cipherAlgorithm: 'AES-GCM',
+    cipherLength: 256,
+    iterations: 262144,
   }
 
   Cryptic.setConfig = function (key, value) {
@@ -155,33 +192,7 @@ var Cryptic = ('object' === typeof module && exports) || {};
     }
 
     return defaultConfig;
-  };
-
-  Cryptic.bufferToString = function (ab) {
-    let bytes = new Uint8Array(ab);
-    let str = new TextDecoder().decode(bytes);
-
-    return str;
-  };
-
-  Cryptic.stringToBuffer = function (str) {
-    let bytes = new TextEncoder().encode(str);
-
-    return bytes.buffer;
-  };
-
-  Cryptic.toHex = function (bytes) {
-    /** @type {Array<String>} */
-    let hex = [];
-
-    bytes.forEach(function (b) {
-      let h = b.toString(16);
-      h = h.padStart(2, '0');
-      hex.push(h);
-    });
-
-    return hex.join('');
-  };
+  }
 
   Cryptic.toBytes = function (hex) {
     let len = hex.length / 2;
@@ -196,120 +207,136 @@ var Cryptic = ('object' === typeof module && exports) || {};
     }
 
     return bytes;
-  };
+  }
+  Cryptic.toHex = bytes => [...bytes].map(
+    b => b.toString(16).padStart(2, '0')
+  ).join('')
+  Cryptic.bufferToString = ab => new TextDecoder().decode(new Uint8Array(ab))
+  Cryptic.stringToBuffer = str => new TextEncoder().encode(str).buffer
+  Cryptic.bufferToHex = buf => Cryptic.toHex(new Uint8Array(buf))
+  Cryptic.hexToBuffer = hex => Cryptic.toBytes(hex).buffer
+  Cryptic.randomBytes = (bytes = 16) => Crypto.getRandomValues(
+    new Uint8Array(bytes)
+  )
 
-  Cryptic.bufferToHex = function (buf) {
-    let bytes = new Uint8Array(buf);
-    let hex = Cryptic.toHex(bytes);
-    return hex;
-  };
-
-  Cryptic.hexToBuffer = function (hex) {
-    let bytes = Cryptic.toBytes(hex);
-    return bytes.buffer;
-  };
-
-  Cryptic.randomBytes = function (bytes = 16) {
-    return Crypto.getRandomValues(
-      new Uint8Array(bytes)
-    )
-  };
-
-  Cryptic.encryptString = function (
+  Cryptic.create = function (
     password,
     salt,
     currentCrypto = Crypto,
   ) {
     let encryptionPassword = password
-    // const name = 'AES-GCM';
-    // const targets = ['encrypt', 'decrypt'];
-    // const pbkdfName = 'PBKDF2';
-    // const hash = { name: 'SHA-256', length: 256 };
-    // const iterations = 1000;
 
-    const deriveKey = async (
+    async function importKey(
       password,
-      salt,
       currentCrypto = Crypto
-    ) => {
-      const keyMaterial = await currentCrypto.subtle.importKey(
+    ) {
+      return await currentCrypto.subtle.importKey(
         'raw',
         Cryptic.stringToBuffer(password),
-        defaultConfig.pbkdfName,
+        defaultConfig.derivationAlgorithm,
         false,
-        ['deriveBits', 'deriveKey'],
-      );
+        // @ts-ignore
+        defaultConfig.materialTargets,
+      )
+    }
 
-      return currentCrypto.subtle.deriveKey(
+    const keyMaterial = importKey(encryptionPassword, currentCrypto)
+
+    async function deriveBits(
+      numBits,
+      salt,
+      currentCrypto = Crypto
+    ) {
+      return await currentCrypto.subtle.deriveBits(
         {
-          name: defaultConfig.pbkdfName,
-          salt: Cryptic.stringToBuffer(salt),
+          name: defaultConfig.derivationAlgorithm,
+          salt: Cryptic.hexToBuffer(salt),
           iterations: defaultConfig.iterations,
-          hash: defaultConfig.hash.name,
+          hash: defaultConfig.hashingAlgorithm,
         },
-        keyMaterial,
+        await keyMaterial,
+        numBits,
+      )
+    }
+
+    async function deriveKey(
+      salt,
+      currentCrypto = Crypto
+    ) {
+      return await currentCrypto.subtle.deriveKey(
         {
-          name: defaultConfig.name,
-          length: defaultConfig.length,
+          name: defaultConfig.derivationAlgorithm,
+          salt: Cryptic.hexToBuffer(salt),
+          iterations: defaultConfig.iterations,
+          hash: defaultConfig.hashingAlgorithm,
+        },
+        await keyMaterial,
+        {
+          name: defaultConfig.cipherAlgorithm,
+          length: defaultConfig.cipherLength,
         },
         true,
         // @ts-ignore
-        defaultConfig.targets,
-      );
-    };
+        defaultConfig.deriveTargets,
+      )
+    }
 
-    async function encrypt(message, iv) {
+    const derivedKey = deriveKey(salt, currentCrypto)
+
+    async function encrypt(
+      message, iv,
+      outputFormatter = Cryptic.bufferToHex
+    ) {
       if ('string' === typeof iv) {
         iv = Cryptic.hexToBuffer(iv);
       }
 
-      let cipherCfg = getCipherCfg(iv)
-
-      return await deriveKey(encryptionPassword, salt)
+      return await derivedKey
         .then(
           async (cryptoKey) =>
             await currentCrypto.subtle.encrypt(
-              {
-                name: defaultConfig.name,
-                iv,
-                ...cipherCfg,
-              },
+              getCipherCfg(iv),
               cryptoKey,
               Cryptic.stringToBuffer(message),
-            ),
+            )
         )
-        .then((enc) => Cryptic.bufferToHex(enc))
+        .then(outputFormatter)
     }
 
-    async function decrypt(ciphertext, iv) {
+    async function decrypt(
+      ciphertext, iv,
+      outputFormatter = Cryptic.bufferToString
+    ) {
       if ('string' === typeof iv) {
         iv = Cryptic.hexToBuffer(iv);
       }
 
-      let cipherCfg = getCipherCfg(iv)
-
-      return await deriveKey(encryptionPassword, salt)
-        .then(async function (cryptoKey) {
-          return await currentCrypto.subtle.decrypt(
-            {
-              name: defaultConfig.name,
-              iv,
-              ...cipherCfg,
-            },
-            cryptoKey,
-            Cryptic.hexToBuffer(ciphertext),
-          );
-        })
-        .then((dec) => Cryptic.bufferToString(dec))
+      return await derivedKey
+        .then(
+          async cryptoKey =>
+            await currentCrypto.subtle.decrypt(
+              getCipherCfg(iv),
+              cryptoKey,
+              Cryptic.hexToBuffer(ciphertext),
+            )
+        )
+        .then(outputFormatter)
     }
 
     function getCipherCfg(iv) {
-      let cipherCfg = {}
+      let cipherCfg = {
+        name: defaultConfig.cipherAlgorithm,
+      }
 
-      if (defaultConfig.name === 'AES-CTR') {
+      if (defaultConfig.cipherAlgorithm === 'AES-GCM') {
+        cipherCfg.iv = iv
+      }
+
+      if (defaultConfig.cipherAlgorithm === 'AES-CTR') {
         cipherCfg = {
+          ...cipherCfg,
           counter: iv,
-          length: defaultConfig.length
+          length: defaultConfig.cipherLength
         }
       }
 
@@ -320,8 +347,16 @@ var Cryptic = ('object' === typeof module && exports) || {};
       return Cryptic.randomBytes(16);
     }
 
-    return { encrypt, decrypt, deriveKey, getInitVector };
+    return {
+      keyMaterial, derivedKey,
+      encrypt, decrypt, deriveBits, deriveKey, getInitVector,
+    };
   };
+
+  /**
+   * @deprecated since version 0.1.0
+   */
+  Cryptic.encryptString = Cryptic.create; // deprecated
 
   Cryptic.isBrowserSupported = async () => {
     const testMessage = 'w?';

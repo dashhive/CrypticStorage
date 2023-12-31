@@ -1,12 +1,13 @@
 /**
- * @typedef {import('./cryptic.js').StringCryptic} StringCryptic
+ * @typedef {import('./cryptic.js').CrypticMethods} CrypticMethods
  * @typedef {import('./cryptic.js').BufferToString} BufferToString
  * @typedef {import('./cryptic.js').StringToBuffer} StringToBuffer
  * @typedef {import('./cryptic.js').ToHex} ToHex
  * @typedef {import('./cryptic.js').ToBytes} ToBytes
  * @typedef {import('./cryptic.js').BufferToHex} BufferToHex
  * @typedef {import('./cryptic.js').HexToBuffer} HexToBuffer
- * @typedef {import('./cryptic.js').EncryptString} EncryptString
+ * @typedef {import('./cryptic.js').CrypticInstance} CrypticInstance
+ * @typedef {import('./cryptic.js').EncryptStr} EncryptString
  * @typedef {import('./cryptic.js').BrowserSupport} BrowserSupport
  * @typedef {import('./cryptic.js').Cryptic} Cryptic
  */
@@ -22,7 +23,8 @@
  * @prop {EncryptedStorage} getEncryptedStorage
  * @prop {EncryptedStorageFromPassword} getEncryptedStorageFromPassword
  * @prop {EncryptedStorageFromCrypto} getEncryptedStorageFromCrypto
- * @prop {EncryptString} encryptString
+ * @prop {CrypticInstance} create
+ * @prop {EncryptString} encryptString - Deprecated: renamed to `create` since version 0.1.0
  * @prop {BrowserSupport} isBrowserSupported
  */
 
@@ -31,7 +33,7 @@
  * @callback EncryptedStorage
  *
  * @param {Storage} storage
- * @param {String | StringCryptic} arg1
+ * @param {String | CrypticMethods} arg1
  * @param {String} arg2
  *
  * @returns {Promise<EncryptedStorageFromCrypto | EncryptedStorageFromPassword>}
@@ -44,7 +46,7 @@
  * @callback EncryptedStorageFromCrypto
  *
  * @param {Storage} storage Browser storage - localStorage, sessionStorage
- * @param {StringCryptic} cryptoWrapper Crypto
+ * @param {CrypticMethods} cryptoWrapper Crypto
  */
 
 /**
